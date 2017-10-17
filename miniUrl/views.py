@@ -1,50 +1,51 @@
-import sqlite3
 from flask import request, redirect, jsonify
 from miniUrl import app, get_db, shorten
-from utility import validate_json, classify_user_agent
+from utility import *
 
 
 @app.route('/shorten', methods=['POST'])
-def index():
+def shorten_url():
+    """
+    shorten_url: Validates the json request, creates the shortened url and returns as json
+    """
     try:
         json_obj = request.get_json()
         validate_json(json_obj)
-        mini_url = shorten.add_mini_url(get_db(), json_obj)
-        response = {'miniUrl': mini_url}
+        validate_urls(json_obj)
+        mini_url = shorten.add_mini_url(get_db(), json_obj, app.config['MINI_URL_BASE'])
+        response = { 'miniUrl': mini_url }
         return jsonify(response)
-    except ValueError as ex:
-        if ex.message == "url":
-            return error_response("Invalid url specified")
-        elif ex.message == "request":
-            return error_response("Invalid request format")
-    except sqlite3.Error as ex:
-        print(ex.message)
-        return error_response("Server error"), 500
+    except JsonValidationException:
+        return error_response("Invalid request format")
+    except UrlValidationException:
+        return error_response("Invalid url specified")
 
 
 @app.route('/mini/<mini_url>', methods=['GET'])
 def redirect_to_target(mini_url):
+    """
+    redirect_to_target: Given a GET request to a mini url, identifies the device type
+    of the user agent. If device is a tablet or mobile and a corresponding url is stored,
+    redirects to that url. Otherwise redirects to the default url. If the mini url is not
+    found in db returns 404
+    @:param mini_url
+    """
     user_agent_str = request.headers.get('User-Agent')
-    device_type = classify_user_agent(user_agent_str)
-    try:
-        redirect_url = shorten.retrieve_url(get_db(), mini_url, device_type)
-        if redirect_url is not None:
-            return redirect(redirect_url)
-        else:
-            return error_response("No such url stored"), 404
-    except sqlite3.Error:
-        return error_response("Server error"), 500
+    device_type = identify_device_type(user_agent_str)
+    redirect_url = shorten.retrieve_url(get_db(), mini_url, device_type)
+    if redirect_url is not None:
+        return redirect(redirect_url)
+    else:
+        return error_response("No such url stored"), 404
 
 
 @app.route('/stats', methods=['GET'])
 def stats():
-    try:
-        return jsonify(shorten.stats(get_db()))
-    except sqlite3.Error:
-        return error_response("Server error"), 500
+    """
+    Return stats for all stored urls, including age and hit count
+    """
+    return jsonify(shorten.stats(get_db(), app.config['MINI_URL_BASE']))
 
 
 def error_response(error_msg):
     return jsonify({"Status": "Failure", "Error": error_msg})
-
-

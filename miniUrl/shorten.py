@@ -1,62 +1,7 @@
 from time import time
+from datetime import timedelta
 from encode import encode, decode
 
-
-def add_mini_url(db, targets_dict):
-    cursor = db.cursor()
-    query = QUERY_INSERT_MINI.format(int(time()))
-    cursor.execute(query)
-    db.commit()
-    mini_url_id = cursor.lastrowid
-    values = ["( '{1}', '{0}' )".format(device, targets_dict[device]) for device in targets_dict]
-    query = QUERY_INSERT_TARGETS.format(','.join(values), mini_url_id)
-    cursor.executescript(query)
-    db.commit()
-    return create_url(mini_url_id)
-
-
-def stats(db):
-    cursor = db.cursor()
-    cursor.execute(QUERY_GET_STATS)
-    rows = cursor.fetchall()
-    stats = {}
-    now = int(time())
-    for row in rows:
-        mini_url = create_url(row[0])
-        if mini_url not in stats:
-            stats[mini_url] = { "age": seconds_to_time(now - row[1]),
-                                "targets": []}
-        stats[mini_url]['targets'].append(
-            {"target": row[2], "hits": row[3]}
-        )
-    return stats
-
-
-def retrieve_url(db, mini_url, user_agent):
-    cursor = db.cursor()
-    mini_url_id = decode(mini_url)
-    query = QUERY_RETRIEVE_TARGET.format(mini_url_id, user_agent)
-    cursor.execute(query)
-    rows = cursor.fetchall()
-    if len(rows) > 0:
-        cursor.execute(QUERY_UPDATE_HITS.format(mini_url_id, rows[0][1]))
-        db.commit()
-        return rows[0][0]
-    else:
-        return None
-
-
-def create_url(mini_url_id):
-    return MINI_URL_BASE + encode(mini_url_id)
-
-
-def seconds_to_time(seconds):
-    minutes, secs = divmod(seconds, 60)
-    hrs, minutes = divmod(minutes, 60)
-    return "%d hrs %02d mins %02d sec" % (hrs, minutes, secs)
-
-
-MINI_URL_BASE = 'http://localhost:5000/mini/'
 
 QUERY_RETRIEVE_TARGET = '''
     select targetUrl, typeId
@@ -89,3 +34,81 @@ QUERY_UPDATE_HITS = '''
     update targetUrls
     set hits = hits + 1
     where miniUrlId = '{0}' and typeId = {1}'''
+
+
+def add_mini_url(db, targets_json, base_url):
+    """
+    Adds row to miniUrls table for the new miniUrl and commits change.
+    Retrieves the id of the inserted row using cursor.lastrowid after commit
+    which should avoid issues with concurrency since cursor.lawrowid is a
+    connection-specific property. Adds a row to targetUrls table for each supplied
+    targetUrl. Encodes the id as a base 62 string and returns the new mini_url
+    :param db: connection to db
+    :param targets_dict: json object containing urls for each device as key value pairs
+    :param base_url: base for mini url
+    :return: new mini url
+    """
+    cursor = db.cursor()
+    query = QUERY_INSERT_MINI.format(int(time()))
+    cursor.execute(query)
+    db.commit()
+    mini_url_id = cursor.lastrowid
+    values = ["( '{1}', '{0}' )".format(device, targets_json[device]) for device in targets_json]
+    query = QUERY_INSERT_TARGETS.format(','.join(values), mini_url_id)
+    cursor.executescript(query)
+    db.commit()
+    return create_url(mini_url_id, base_url)
+
+
+def stats(db, base_url):
+    """
+    Returns stats for all stored mini urls as a dictionary of dictionaries
+    Runs a query joining the miniUrls table with the targetUrls table, then iterates over
+    each row, storing each mini url as a key in a dictionary and creating a dictionary for that key
+    to store its age and a list of targets
+    :param db: db connection
+    :param base_url:
+    :return: dictionary (key: mini url; value: dictionary with keys 'age' and 'targets')
+    """
+    cursor = db.cursor()
+    cursor.execute(QUERY_GET_STATS)
+    rows = cursor.fetchall()
+    stats = {}
+    now = int(time())
+    for row in rows:
+        mini_url = create_url(row[0], base_url)
+        if mini_url not in stats:
+            stats[mini_url] = { "age": str(timedelta(seconds=now - row[1])),
+                                "targets": []}
+        stats[mini_url]['targets'].append(
+            {"target": row[2], "hits": row[3]}
+        )
+    return stats
+
+
+def retrieve_url(db, mini_url, device):
+    """
+    Decodes the mini url to its id, then runs a query returning the appropriate target url.
+    The query returns the device specific target url if available or the default url if not
+    :param db: database connection
+    :param mini_url: the mini url
+    :param device: one of 'mobile', 'tablet' or 'default'
+    :return: target url for redirect
+    """
+    cursor = db.cursor()
+    mini_url_id = decode(mini_url)
+    query = QUERY_RETRIEVE_TARGET.format(mini_url_id, device)
+    cursor.execute(query)
+    row = cursor.fetchone()
+    if row is not None:
+        cursor.execute(QUERY_UPDATE_HITS.format(mini_url_id, row[1]))
+        db.commit()
+        return row[0]
+    else:
+        return None
+
+
+def create_url(mini_url_id, base_url):
+    return base_url + encode(mini_url_id)
+
+

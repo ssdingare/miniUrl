@@ -6,21 +6,22 @@ app.config.from_object('config')
 
 
 def get_db():
+    """
+    Return db connection for given app context g or instantiate if none
+    """
     if not hasattr(g, 'db'):
         g.db = connect_db(app.config['DATABASE'])
     return g.db
 
 
 def connect_db(path):
-    try:
-        conn = sqlite3.connect(path)
-        return conn
-    except sqlite3.Error as error:
-        print(error)
-        exit()
+    return sqlite3.connect(path)
 
 
 def init_db():
+    """
+    Initialize database using schema file and populate the device types
+    """
     db = get_db()
     with app.open_resource(app.config['SCHEMA'], mode='r') as schema:
         db.cursor().executescript(schema.read())
@@ -34,6 +35,9 @@ def init_command():
 
 @app.teardown_appcontext
 def close(error):
+    """
+    Close database connection on teardown
+    """
     if hasattr(g, 'db'):
         g.db.close()
 

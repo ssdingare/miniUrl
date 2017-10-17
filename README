@@ -1,32 +1,19 @@
 
-README to run the miniUrl app
+README to run and use the miniUrl app
 
 
-INSTALL
-After cloning repository, cd into the miniUrl directory
-Create a virtual environment using:
+RUN
 
-    $ virtualenv env
+After cloning repository:
 
-Activate the virtual environment using:
+1. Change directory into the miniUrl directory:    $ cd miniUrl
+2. Create a virtual environment:                   $ virtualenv env
+3. Activate the virtual environment:               $ source env/bin/activate
+4. Install dependencies:                           $ pip install -r requirements.txt
 
-    $ source ./bin/activate
+Now run the app for the first time :
 
-Change directory into the newly created env directory
-
-    $ cd env
-
-Install dependencies using
-
-    $ pip install -r ../requirements.txt
-
-Change directory back to the app directory
-
-    $ cd ..
-
-Now run the app for the first time using python 2.7:
-
-    $ python run.py --init
+    $ python run.py --initdb
 
 On subsequent occasions run the app using
 
@@ -38,11 +25,10 @@ USE
 To shorten a URL (http or https)
 --------------------------------
 Issue a POST command to http://localhost:5000/shorten with json in the following format:
-    {"default": URL_TO_REDIRECT }
-You will receive a json response containing the shortened miniUrl
-Example:
-curl -H "Content-Type: application/json"  -X POST -d \
-'{"default": "http://cnn.com"}' http://localhost:5000/shorten
+    {"default": <url to shorten> }
+    Example:
+    curl -H "Content-Type: application/json"  -X POST -d \
+        '{"default": "http://cnn.com"}' http://localhost:5000/shorten
 
 
 To shorten a URL and allow for device-specific redirection
@@ -51,11 +37,16 @@ Again issue a POST command to http://localhost:5000/shorten, but include in the 
 the additional urls (only 'tablet' and 'mobile' are supported - one or both can be included)
 
 Example:
-curl -H "Content-Type: application/json"  -X POST -d \
-'{"default": "http://cnn.com", "mobile":"http://netflix.com", "tablet": "http://washingtonpost.com"}' \
-http://localhost:5000/shorten
+    curl -H "Content-Type: application/json"  -X POST -d \
+        '{"default": "http://cnn.com", "mobile":"http://netflix.com", "tablet": "http://washingtonpost.com"}' \
+        http://localhost:5000/shorten
+
 
 To obtain statistics for all shortened urls
 -------------------------------------------
 Issue a GET request to http://localhost:5000/stats
 
+
+Notes
+-----
+Logging to be added
