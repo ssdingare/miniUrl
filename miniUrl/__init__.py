@@ -1,8 +1,17 @@
 import sqlite3
+from os.path import join
 from flask import Flask, g
 
 app = Flask(__name__)
-app.config.from_object('config')
+
+db_dir = join(app.root_path, 'db')
+app.config.update(dict(
+    DATABASE=join(db_dir, 'miniURL.db'),
+    USERNAME='admin',
+    PASSWORD='default',
+    SCHEMA=join(db_dir, 'schema.sql'),
+    MINI_URL_BASE='http://localhost:5000/mini/'
+))
 
 
 def get_db():
@@ -31,8 +40,8 @@ def init_db():
     db.commit()
 
 
-@app.cli.command('init')
-def init_command():
+@app.cli.command('initdb')
+def initdb_command():
     init_db()
 
 

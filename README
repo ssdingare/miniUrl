@@ -1,8 +1,7 @@
 
-README to run and use the miniUrl app
+README
 
-
-RUN
+INSTALL
 
 After cloning repository:
 
@@ -10,14 +9,16 @@ After cloning repository:
 2. Create a virtual environment:                   $ virtualenv env
 3. Activate the virtual environment:               $ source env/bin/activate
 4. Install dependencies:                           $ pip install -r requirements.txt
+5. Install the app locally                         $ pip install --editable .
+6. Set up environment                              $ export FLASK_APP=flaskr
+5. Initialize the database                         $ flask initdb
 
-Now run the app for the first time :
 
-    $ python run.py --initdb
+RUN
 
-On subsequent occasions run the app using
+To run the app:
 
-    $ python run.py
+    $ flask run
 
 
 USE
