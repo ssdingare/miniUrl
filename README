@@ -1,0 +1,27 @@
+
+README to run the miniUrl app
+
+
+INSTALL
+After cloning repository, cd into the miniUrl directory
+
+Create a virtual environment using:
+
+$ virtualenv env
+
+Change directory into the newly created env directory
+
+$ cd env
+
+Install dependencies using
+
+$ pip install -r requirements.txt
+
+Now run the app for the first time using python 2.7:
+
+$ python run.py --init
+
+On subsequent occasions run the app using
+
+# python run.py
+
