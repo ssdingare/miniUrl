@@ -33,10 +33,10 @@ def redirect_to_target(mini_url):
     user_agent_str = request.headers.get('User-Agent')
     device_type = identify_device_type(user_agent_str)
     redirect_url = shorten.retrieve_url(get_db(), mini_url, device_type)
-    if redirect_url is not None:
-        return redirect(redirect_url)
-    else:
+    if redirect_url is None:
         return error_response("No such url stored"), 404
+    else:
+        return redirect(redirect_url)
 
 
 @app.route('/stats', methods=['GET'])
@@ -44,7 +44,7 @@ def stats():
     """
     Return stats for all stored urls, including age and hit count
     """
-    return jsonify(shorten.stats(get_db(), app.config['MINI_URL_BASE']))
+    return jsonify(shorten.get_stats(get_db(), app.config['MINI_URL_BASE']))
 
 
 def error_response(error_msg):

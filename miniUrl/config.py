@@ -1,10 +1,10 @@
 from os.path import abspath, join, dirname
 from miniUrl import app
 
-basedir = abspath(dirname(__file__))
+db_dir = join(app.root_path, 'db')
 
-DATABASE = join(app.root_path, 'miniURL.db')
+DATABASE = join(db_dir, 'miniURL.db')
 USERNAME = 'admin'
 PASSWORD = 'default'
-SCHEMA = 'schema.sql'
+SCHEMA = join(db_dir, 'schema.sql')
 MINI_URL_BASE = 'http://localhost:5000/mini/'

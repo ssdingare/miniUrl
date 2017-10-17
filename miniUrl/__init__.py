@@ -15,7 +15,10 @@ def get_db():
 
 
 def connect_db(path):
-    return sqlite3.connect(path)
+    """
+    Connect in auto-commit mode
+    """
+    return sqlite3.connect(path, isolation_level=None)
 
 
 def init_db():
