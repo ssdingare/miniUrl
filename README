@@ -4,24 +4,58 @@ README to run the miniUrl app
 
 INSTALL
 After cloning repository, cd into the miniUrl directory
-
 Create a virtual environment using:
 
-$ virtualenv env
+    $ virtualenv env
+
+Activate the virtual environment using:
+
+    $ source ./bin/activate
 
 Change directory into the newly created env directory
 
-$ cd env
+    $ cd env
 
 Install dependencies using
 
-$ pip install -r requirements.txt
+    $ pip install -r ../requirements.txt
+
+Change directory back to the app directory
+
+    $ cd ..
 
 Now run the app for the first time using python 2.7:
 
-$ python run.py --init
+    $ python run.py --init
 
 On subsequent occasions run the app using
 
-# python run.py
+    $ python run.py
+
+
+USE
+
+To shorten a URL (http or https)
+--------------------------------
+Issue a POST command to http://localhost:5000/shorten with json in the following format:
+    {"default": URL_TO_REDIRECT }
+You will receive a json response containing the shortened miniUrl
+Example:
+curl -H "Content-Type: application/json"  -X POST -d \
+'{"default": "http://cnn.com"}' http://localhost:5000/shorten
+
+
+To shorten a URL and allow for device-specific redirection
+----------------------------------------------------------
+Again issue a POST command to http://localhost:5000/shorten, but include in the json
+the additional urls (only 'tablet' and 'mobile' are supported - one or both can be included)
+
+Example:
+curl -H "Content-Type: application/json"  -X POST -d \
+'{"default": "http://cnn.com", "mobile":"http://netflix.com", "tablet": "http://washingtonpost.com"}' \
+http://localhost:5000/shorten
+
+To obtain statistics for all shortened urls
+-------------------------------------------
+Issue a GET request to http://localhost:5000/stats
 
