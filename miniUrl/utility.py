@@ -1,3 +1,4 @@
+import re
 import validators
 import jsonschema
 from user_agents import parse
@@ -25,6 +26,7 @@ request_schema = {
             "type": "string"
         }
     },
+    "additionalProperties": False,
     "required": ["default"]
 }
 
@@ -40,13 +42,15 @@ def validate_json(json_obj):
         raise JsonValidationException
 
 
-def validate_urls(json_obj):
+def validate_urls(json_obj, app_url):
     """
     Checks that each supplied url in json request object is a valid url
+    and that it is not a reference to the mini url site
     :param json_obj: a json object
     """
     for key in json_obj:
-        if not(validators.url(json_obj[key])):
+        url = json_obj[key]
+        if app_url in url or re.match("\s*ftp:", url) or not(validators.url(url)):
             raise UrlValidationException
 
 

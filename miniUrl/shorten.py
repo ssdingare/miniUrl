@@ -32,12 +32,16 @@ def add_mini_url(db, targets, base_url):
     inserted row, then use the new id to insert new rows for one or more redirect
     targets. Encodes the id as a base 62 string and returns the new mini_url
 
+    Since db here is SQLite, calculation of the createdTimestamp for the inserted
+    row is performed in the script rather than on the db (since sqlite is a local
+    db the times should be identical)
+
     Query is wrapped in a transaction to prevent storing of partial information
     SQL injection is protected against both by previous json validation against
     request.schema and by passing parameters to the cursor's execute method (rather
     than using python string.format)
 
-    Use of executescript is not possible here because it does not allow for
+    Use of executescript is not possible here because it does not allow for safe
     parameter passing and because the inserted row id for the mini url must be
     cached mid-SQL
     :param db: connection to db
@@ -99,10 +103,13 @@ def retrieve_url(db, mini_url, device):
     :param db: database connection
     :param mini_url: the mini url
     :param device: one of 'mobile', 'tablet' or 'default'
-    :return: target url for redirect
+    :return: target url for redirect, None if mini_url not found in db
     """
     cursor = db.cursor()
-    mini_url_id = decode(mini_url)
+    try:
+        mini_url_id = decode(mini_url)
+    except ValueError:
+        return None
     cursor.execute(QUERY_RETRIEVE_TARGET, (mini_url_id, device))
     row = cursor.fetchone()
     if row is None:

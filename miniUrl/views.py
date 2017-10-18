@@ -9,9 +9,10 @@ def shorten_url():
     shorten_url: Validates the json request, creates the shortened url and returns as json
     """
     try:
+        print(app.__class__)
         json_obj = request.get_json()
         validate_json(json_obj)
-        validate_urls(json_obj)
+        validate_urls(json_obj, app.config['MINI_URL_BASE'])
         mini_url = shorten.add_mini_url(get_db(), json_obj, app.config['MINI_URL_BASE'])
         response = { 'miniUrl': mini_url }
         return jsonify(response)
